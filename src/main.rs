@@ -31,12 +31,13 @@ fn main() {
         turn(
             &mut field,
             if turn_count % 2 == 0 {
+                turn_count += 1;
                 Stone::Black
             } else {
+                turn_count -= 1;
                 Stone::White
             },
         );
-        turn_count += 1;
     }
 }
 
@@ -45,7 +46,7 @@ fn turn(field: &mut [[Stone; 10]; 10], stone: Stone) {
     println!("Enter a move (ex: A1): ");
     loop {
         let (x, y) = get_input();
-        if is_placeable(&field, x, y, stone, 0) {
+        if is_placeable(field, x, y, stone) {
             field[y as usize][x as usize] = stone;
             break;
         } else {
@@ -64,82 +65,182 @@ fn get_input() -> (u32, u32) {
 }
 
 // TODO: もっときれいに実装する
-fn is_placeable(field: &[[Stone; 10]; 10], x: u32, y: u32, stone: Stone, dir: u32) -> bool {
-    let mut i = 2;
-    let mut j = 2;
+fn is_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
     if x > 9 || y > 9 {
         return false;
     }
-    if field[x as usize][y as usize] != Stone::Empty {
+    if field[y as usize][x as usize] != Stone::Empty {
         return false;
     }
+    let left = left_placeable(field, x, y, stone);
+    let right = right_placeable(field, x, y, stone);
+    let upper = upper_placeable(field, x, y, stone);
+    let lower = lower_placeable(field, x, y, stone);
+    let left_upper = left_upper_placeable(field, x, y, stone);
+    let right_upper = right_upper_placeable(field, x, y, stone);
+    let left_lower = left_lower_placeable(field, x, y, stone);
+    let right_lower = right_lower_placeable(field, x, y, stone);
+
+    left || right || upper || lower || left_upper || right_upper || left_lower || right_lower
+}
+
+fn left_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
     loop {
-        match dir {
-            0 => {
-                if x + i > 9 || field[(x + 1) as usize][y as usize] != stone.enemy() {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x + i) as usize][y as usize] == stone {
-                    return true;
-                }
+        if x < i || y < i {
+            return false;
+        }
+        if field[(y - 1) as usize][(x - 1) as usize] == stone.enemy()
+            && field[(y - i) as usize][(x - i) as usize] == stone
+        {
+            for j in 1..i {
+                field[(y - j) as usize][(x - j) as usize] = stone;
             }
-            1 => {
-                if x + i > 9
-                    || y + j > 9
-                    || field[(x + 1) as usize][(y + 1) as usize] != stone.enemy()
-                {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x + i) as usize][(y + j) as usize] == stone {
-                    return true;
-                }
-            }
-            2 => {
-                if y + j > 9 || field[x as usize][(y + 1) as usize] != stone.enemy() {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[x as usize][(y + j) as usize] == stone {
-                    return true;
-                }
-            }
-            3 => {
-                if x < i || y + j > 9 || field[(x - 1) as usize][(y + 1) as usize] != stone.enemy()
-                {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x - i) as usize][(y + j) as usize] == stone {
-                    return true;
-                }
-            }
-            4 => {
-                if x < i || field[(x - 1) as usize][y as usize] != stone.enemy() {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x - i) as usize][y as usize] == stone {
-                    return true;
-                }
-            }
-            5 => {
-                if x < i || y < j || field[(x - 1) as usize][(y - 1) as usize] != stone.enemy() {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x - i) as usize][(y - j) as usize] == stone {
-                    return true;
-                }
-            }
-            6 => {
-                if y < j || field[x as usize][(y - 1) as usize] != stone.enemy() {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[x as usize][(y - j) as usize] == stone {
-                    return true;
-                }
-            }
-            7 => {
-                if x + i > 9 || y < j || field[(x + 1) as usize][(y - 1) as usize] != stone.enemy()
-                {
-                    return is_placeable(field, x, y, stone, dir + 1);
-                } else if field[(x + i) as usize][(y - j) as usize] == stone {
-                    return true;
-                }
-            }
-            _ => return false,
+            return true;
+        } else if field[(y - i) as usize][(x - i) as usize] == Stone::Empty {
+            return false;
         }
         i += 1;
-        j += 1;
+    }
+}
+
+fn right_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if x + i > 9 || y < i {
+            return false;
+        }
+        if field[(y - 1) as usize][(x + 1) as usize] == stone.enemy()
+            && field[(y - i) as usize][(x + i) as usize] == stone
+        {
+            for j in 1..i {
+                field[(y - j) as usize][(x + j) as usize] = stone;
+            }
+            return true;
+        } else if field[(y - i) as usize][(x + i) as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn right_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if x + i > 9 {
+            return false;
+        }
+        if field[y as usize][(x + 1) as usize] == stone.enemy()
+            && field[y as usize][(x + i) as usize] == stone
+        {
+            for j in 1..i {
+                field[y as usize][(x + j) as usize] = stone;
+            }
+            return true;
+        } else if field[y as usize][(x + i) as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn right_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if x + i > 9 || y + i > 9 {
+            return false;
+        }
+        if field[(y + 1) as usize][(x + 1) as usize] == stone.enemy()
+            && field[(y + i) as usize][(x + i) as usize] == stone
+        {
+            for j in 1..i {
+                field[(y + j) as usize][(x + j) as usize] = stone;
+            }
+            return true;
+        } else if field[(y + i) as usize][(x + i) as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn left_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if x < i {
+            return false;
+        }
+        if field[y as usize][(x - 1) as usize] == stone.enemy()
+            && field[y as usize][(x - i) as usize] == stone
+        {
+            for j in 1..i {
+                field[y as usize][(x - j) as usize] = stone;
+            }
+            return true;
+        } else if field[y as usize][(x - i) as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn left_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if x < i || y + i > 9 {
+            return false;
+        }
+        if field[(y + 1) as usize][(x - 1) as usize] == stone.enemy()
+            && field[(y + i) as usize][(x - i) as usize] == stone
+        {
+            for j in 1..i {
+                field[(y + j) as usize][(x - j) as usize] = stone;
+            }
+            return true;
+        } else if field[(y + i) as usize][(x - i) as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if y + i > 9 {
+            return false;
+        }
+        if field[(y + 1) as usize][x as usize] == stone.enemy()
+            && field[(y + i) as usize][x as usize] == stone
+        {
+            for j in 1..i {
+                field[(y + j) as usize][x as usize] = stone;
+            }
+            return true;
+        } else if field[(y + i) as usize][x as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
+    }
+}
+
+fn upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+    let mut i = 2;
+    loop {
+        if y < i {
+            return false;
+        }
+        if field[(y - 1) as usize][x as usize] == stone.enemy()
+            && field[(y - i) as usize][x as usize] == stone
+        {
+            for j in 1..i {
+                field[(y - j) as usize][x as usize] = stone;
+            }
+            return true;
+        } else if field[(y - i) as usize][x as usize] == Stone::Empty {
+            return false;
+        }
+        i += 1;
     }
 }
 
