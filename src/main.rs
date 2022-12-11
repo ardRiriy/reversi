@@ -1,3 +1,9 @@
+macro_rules! size {
+    () => {
+        10
+    };
+}
+
 #[derive(Clone, Copy, PartialEq)]
 enum Stone {
     Empty,
@@ -20,7 +26,7 @@ fn main() {
      * field[x][y]は
      * xが上下，yが左右になっているので注意
      */
-    let mut field: [[Stone; 10]; 10] = [[Stone::Empty; 10]; 10];
+    let mut field: [[Stone; size!()]; size!()] = [[Stone::Empty; size!()]; size!()];
     field[4][4] = Stone::Black;
     field[4][5] = Stone::White;
     field[5][4] = Stone::White;
@@ -41,7 +47,7 @@ fn main() {
     }
 }
 
-fn turn(field: &mut [[Stone; 10]; 10], stone: Stone) {
+fn turn(field: &mut [[Stone; size!()]; size!()], stone: Stone) {
     print_field(&field);
     println!("Enter a move (ex: A1): ");
     loop {
@@ -65,7 +71,7 @@ fn get_input() -> (u32, u32) {
 }
 
 // TODO: もっときれいに実装する
-fn is_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn is_placeable(field: &mut [[Stone; size!()]; size!()], x: u32, y: u32, stone: Stone) -> bool {
     if x > 9 || y > 9 {
         return false;
     }
@@ -84,7 +90,12 @@ fn is_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> 
     left || right || upper || lower || left_upper || right_upper || left_lower || right_lower
 }
 
-fn left_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn left_upper_placeable(
+    field: &mut [[Stone; size!()]; size!()],
+    x: u32,
+    y: u32,
+    stone: Stone,
+) -> bool {
     let mut i = 2;
     loop {
         if x < i || y < i {
@@ -104,10 +115,15 @@ fn left_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: St
     }
 }
 
-fn right_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn right_upper_placeable(
+    field: &mut [[Stone; size!()]; size!()],
+    x: u32,
+    y: u32,
+    stone: Stone,
+) -> bool {
     let mut i = 2;
     loop {
-        if x + i > 9 || y < i {
+        if x + i > size!() - 1 || y < i {
             return false;
         }
         if field[(y - 1) as usize][(x + 1) as usize] == stone.enemy()
@@ -124,10 +140,10 @@ fn right_upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: S
     }
 }
 
-fn right_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn right_placeable(field: &mut [[Stone; size!()]; size!()], x: u32, y: u32, stone: Stone) -> bool {
     let mut i = 2;
     loop {
-        if x + i > 9 {
+        if x + i > size!() - 1 {
             return false;
         }
         if field[y as usize][(x + 1) as usize] == stone.enemy()
@@ -144,10 +160,15 @@ fn right_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) 
     }
 }
 
-fn right_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn right_lower_placeable(
+    field: &mut [[Stone; size!()]; size!()],
+    x: u32,
+    y: u32,
+    stone: Stone,
+) -> bool {
     let mut i = 2;
     loop {
-        if x + i > 9 || y + i > 9 {
+        if x + i > size!() || y + i > size!() {
             return false;
         }
         if field[(y + 1) as usize][(x + 1) as usize] == stone.enemy()
@@ -164,7 +185,7 @@ fn right_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: S
     }
 }
 
-fn left_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn left_placeable(field: &mut [[Stone; size!()]; size!()], x: u32, y: u32, stone: Stone) -> bool {
     let mut i = 2;
     loop {
         if x < i {
@@ -184,10 +205,15 @@ fn left_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -
     }
 }
 
-fn left_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn left_lower_placeable(
+    field: &mut [[Stone; size!()]; size!()],
+    x: u32,
+    y: u32,
+    stone: Stone,
+) -> bool {
     let mut i = 2;
     loop {
-        if x < i || y + i > 9 {
+        if x < i || y + i > size!() - 1 {
             return false;
         }
         if field[(y + 1) as usize][(x - 1) as usize] == stone.enemy()
@@ -204,10 +230,10 @@ fn left_lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: St
     }
 }
 
-fn lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn lower_placeable(field: &mut [[Stone; size!()]; size!()], x: u32, y: u32, stone: Stone) -> bool {
     let mut i = 2;
     loop {
-        if y + i > 9 {
+        if y + i > size!() - 1 {
             return false;
         }
         if field[(y + 1) as usize][x as usize] == stone.enemy()
@@ -224,7 +250,7 @@ fn lower_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) 
     }
 }
 
-fn upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) -> bool {
+fn upper_placeable(field: &mut [[Stone; size!()]; size!()], x: u32, y: u32, stone: Stone) -> bool {
     let mut i = 2;
     loop {
         if y < i {
@@ -244,7 +270,7 @@ fn upper_placeable(field: &mut [[Stone; 10]; 10], x: u32, y: u32, stone: Stone) 
     }
 }
 
-fn print_field(field: &[[Stone; 10]; 10]) {
+fn print_field(field: &[[Stone; size!()]; size!()]) {
     println!("  A B C D E F G H I J");
     let mut i = 0;
 
